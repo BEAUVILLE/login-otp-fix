@@ -5,183 +5,339 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vérification - DIGIYLYFE</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-      background:linear-gradient(135deg,#00853F 0%,#FCD116 100%);
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .douane-container{
-      background:#fff;
-      border-radius:20px;
-      box-shadow:0 20px 60px rgba(0,0,0,.3);
-      max-width:500px;
-      width:100%;
-      padding:50px 40px;
-      text-align:center;
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #00853F 0%, #FCD116 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-    .infinity{
-      font-size:60px;
-      color:#FCD116;
-      margin-bottom:20px;
-      animation:pulse 2s infinite;
+    
+    .douane-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 500px;
+      width: 100%;
+      padding: 50px 40px;
+      text-align: center;
     }
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-    h1{color:#00853F;font-size:24px;margin-bottom:15px}
-    .status{color:#666;font-size:16px;margin-bottom:30px}
-    .spinner{
-      width:50px;height:50px;
-      border:5px solid #f3f3f3;
-      border-top:5px solid #00853F;
-      border-radius:50%;
-      animation:spin 1s linear infinite;
-      margin:30px auto;
+    
+    .infinity {
+      font-size: 60px;
+      color: #FCD116;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
     }
-    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-    .error-box{
-      background:#f8d7da;
-      color:#721c24;
-      padding:20px;
-      border-radius:10px;
-      margin-top:20px;
-      display:none;
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
-    .error-box.show{display:block}
-    .btn-retry{
-      background:#00853F;
-      color:#fff;
-      padding:12px 30px;
-      border:none;
-      border-radius:10px;
-      font-size:16px;
-      font-weight:600;
-      cursor:pointer;
-      margin-top:20px;
+    
+    h1 {
+      color: #00853F;
+      font-size: 24px;
+      margin-bottom: 15px;
     }
-    .btn-retry:hover{background:#006830}
+    
+    .status {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #00853F;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error-box {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .error-box.show {
+      display: block;
+    }
+    
+    .btn-retry {
+      background: #00853F;
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s;
+    }
+    
+    .btn-retry:hover {
+      background: #006830;
+      transform: translateY(-2px);
+    }
+    
+    .debug-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+      text-align: left;
+      font-family: monospace;
+      display: none;
+    }
+    
+    .debug-info.show {
+      display: block;
+    }
   </style>
 </head>
-
 <body>
 
-<div class="douane-container">
-  <div class="infinity">∞</div>
-  <h1>DIGIYLYFE</h1>
-  <p class="status" id="status">Vérification de votre accès...</p>
-  <div class="spinner" id="spinner"></div>
-
-  <div id="errorBox" class="error-box">
-    <p id="errorMessage"></p>
-    <button class="btn-retry" onclick="location.reload()">Réessayer</button>
+  <div class="douane-container">
+    
+    <div class="infinity">∞</div>
+    <h1>DIGIYLYFE</h1>
+    <p class="status" id="status">Vérification de votre accès...</p>
+    
+    <div class="spinner" id="spinner"></div>
+    
+    <div id="errorBox" class="error-box">
+      <p id="errorMessage"></p>
+      <button class="btn-retry" onclick="location.reload()">Réessayer</button>
+    </div>
+    
+    <div id="debugInfo" class="debug-info"></div>
+    
   </div>
-</div>
 
-<script>
-  const SUPABASE_URL = 'https://wesqmwjjtsefyjnluosj.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA';
-
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const statusEl = document.getElementById('status');
-  const spinnerEl = document.getElementById('spinner');
-  const errorBoxEl = document.getElementById('errorBox');
-  const errorMessageEl = document.getElementById('errorMessage');
-
-  function showError(message){
-    statusEl.textContent = 'Erreur';
-    spinnerEl.style.display = 'none';
-    errorMessageEl.textContent = message;
-    errorBoxEl.classList.add('show');
-  }
-
-  function updateStatus(text){
-    statusEl.textContent = text;
-  }
-
-  function normalizeModules(modules){
-    if(!modules) return [];
-    if(Array.isArray(modules)) return modules.map(m=>String(m).trim()).filter(Boolean);
-    if(typeof modules === 'string'){
-      if(modules.startsWith('{') && modules.endsWith('}')){
-        return modules.slice(1,-1).split(',').map(m=>m.replaceAll('"','').trim()).filter(Boolean);
+  <script>
+    // ========================================
+    // CONFIGURATION SUPABASE - CLÉ MISE À JOUR
+    // ========================================
+    const SUPABASE_URL = 'https://wesqmwjjtsefyjnluosj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA';
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // ========================================
+    // ÉLÉMENTS DOM
+    // ========================================
+    const statusEl = document.getElementById('status');
+    const spinnerEl = document.getElementById('spinner');
+    const errorBoxEl = document.getElementById('errorBox');
+    const errorMessageEl = document.getElementById('errorMessage');
+    const debugInfoEl = document.getElementById('debugInfo');
+    
+    // ========================================
+    // HELPERS
+    // ========================================
+    
+    function showError(message, debug = null) {
+      statusEl.textContent = 'Erreur de connexion';
+      spinnerEl.style.display = 'none';
+      errorMessageEl.textContent = message;
+      errorBoxEl.classList.add('show');
+      
+      if (debug) {
+        debugInfoEl.innerHTML = `<strong>Debug:</strong><br>${JSON.stringify(debug, null, 2)}`;
+        debugInfoEl.classList.add('show');
       }
-      try{
-        const parsed = JSON.parse(modules);
-        if(Array.isArray(parsed)) return parsed.map(m=>String(m).trim()).filter(Boolean);
-      }catch{}
-      return [modules.trim()];
+      
+      console.error('❌ Erreur douane:', message, debug);
     }
-    return [];
-  }
-
-  function pickRedirect(mods){
-    if(mods.length > 1) return './mon-espace-choix.html';
-    const m = mods[0].toLowerCase();
-    if(['chauffeur','driver','vtc'].includes(m)) return 'https://beauville.github.io/digiy-chauffeur/';
-    if(['loc','logement','hébergement','hebergement','accommodation'].includes(m)) return 'https://beauville.github.io/digiy-loc/';
-    if(['restaurant','resto','restauration'].includes(m)) return 'https://beauville.github.io/digiy-resto/';
-    return './mon-espace.html';
-  }
-
-  async function routerDouane(){
-    try{
-      updateStatus('Vérification de votre session...');
-      const { data:{ session } } = await supabase.auth.getSession();
-
-      if(!session){
-        showError('Session expirée. Veuillez vous reconnecter.');
-        setTimeout(()=>location.replace('./index.html'),1500);
-        return;
-      }
-
-      updateStatus('Chargement de votre profil...');
-      const { data:pro, error } = await supabase
-        .from('pros')
-        .select('*')
-        .eq('auth_user_id', session.user.id)
-        .maybeSingle();
-
-      if(error){
-        showError('Erreur lors du chargement du profil.');
-        return;
-      }
-
-      if(!pro){
-        setTimeout(()=>location.replace('./inscription-pro.html'),1000);
-        return;
-      }
-
-      if(!pro.is_active){
-        showError('Compte en attente de validation.');
-        return;
-      }
-
-      const modules = normalizeModules(pro.modules);
-      if(modules.length === 0){
-        showError('Aucun module activé.');
-        return;
-      }
-
-      updateStatus('Redirection...');
-      sessionStorage.setItem('digiy_pro', JSON.stringify(pro));
-
-      setTimeout(()=>{
-        location.replace(pickRedirect(modules));
-      },400);
-
-    }catch{
-      showError('Erreur inattendue.');
+    
+    function updateStatus(text) {
+      statusEl.textContent = text;
+      console.log('📍', text);
     }
-  }
-
-  routerDouane();
-</script>
+    
+    // ========================================
+    // ROUTER CENTRAL - LOGIQUE UNIQUE
+    // ========================================
+    
+    async function routerDouane() {
+      
+      try {
+        // ========================================
+        // ÉTAPE 1 : VÉRIFIER SESSION
+        // ========================================
+        updateStatus('Vérification de votre session...');
+        
+        console.log('🔍 Debug: Vérification session...');
+        console.log('🔍 Supabase URL:', SUPABASE_URL);
+        console.log('🔍 LocalStorage:', localStorage.getItem(`sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`));
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        console.log('🔍 Session data:', session);
+        console.log('🔍 Session error:', sessionError);
+        
+        if (sessionError) {
+          throw new Error(`Session error: ${sessionError.message}`);
+        }
+        
+        if (!session) {
+          console.error('❌ Aucune session trouvée');
+          console.log('🔍 Essai de refresh session...');
+          
+          // Essayer de refresh la session
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError || !refreshData.session) {
+            showError('Aucune session active. Veuillez vous reconnecter.');
+            setTimeout(() => {
+              window.location.replace('./index.html');
+            }, 2000);
+            return;
+          }
+          
+          console.log('✅ Session refreshed:', refreshData.session.user.id);
+        }
+        
+        console.log('✅ Session active:', session.user.id);
+        
+        // ========================================
+        // ÉTAPE 2 : RÉCUPÉRER DOSSIER PRO
+        // ========================================
+        updateStatus('Chargement de votre profil...');
+        
+        const { data: pros, error: prosError } = await supabase
+          .from('pros')
+          .select('*')
+          .eq('auth_user_id', session.user.id)
+          .single();
+        
+        if (prosError) {
+          console.warn('⚠️ Erreur récupération pro:', prosError);
+          
+          // Si pas de dossier pro → création wizard
+          if (prosError.code === 'PGRST116') {
+            showError('Aucun profil professionnel trouvé. Redirection vers l\'inscription...');
+            setTimeout(() => {
+              window.location.replace('./inscription-pro.html');
+            }, 2000);
+            return;
+          }
+          
+          throw new Error(`Erreur base de données: ${prosError.message}`);
+        }
+        
+        if (!pros) {
+          showError('Profil professionnel introuvable.');
+          return;
+        }
+        
+        console.log('✅ Dossier pro chargé:', pros);
+        
+        // ========================================
+        // ÉTAPE 3 : ROUTER SELON MODULES
+        // ========================================
+        updateStatus('Redirection vers votre espace...');
+        
+        const { modules, is_active } = pros;
+        
+        // Vérifier statut actif
+        if (!is_active) {
+          showError('Votre compte est en cours de validation. Vous recevrez un SMS dès activation.');
+          return;
+        }
+        
+        // Vérifier que modules existe
+        console.log('🔍 DEBUG modules:', modules);
+        
+        // ALERT POUR DEBUG
+        alert('DEBUG 1:\nmodules = ' + JSON.stringify(modules) + '\ntype = ' + typeof modules + '\narray? ' + Array.isArray(modules));
+        
+        if (!modules || modules.length === 0) {
+          alert('ERREUR: Aucun module activé !');
+          showError('Aucun module activé. Contactez le support DIGIYLYFE.');
+          return;
+        }
+        
+        // Décision de routing basée sur le premier module
+        let redirectUrl;
+        
+        const firstModule = modules[0].toLowerCase().trim();
+        
+        // ALERT POUR DEBUG
+        alert('DEBUG 2:\nmodules[0] = ' + modules[0] + '\nfirstModule = ' + firstModule + '\n=== "chauffeur"? ' + (firstModule === 'chauffeur'));
+        
+        // Si plusieurs modules → page de choix
+        if (modules.length > 1) {
+          alert('Plusieurs modules détectés');
+          redirectUrl = './mon-espace-choix.html';
+        } else {
+          // Router selon le module unique
+          if (firstModule === 'chauffeur' || firstModule === 'driver' || firstModule === 'vtc') {
+            alert('✅ MATCH CHAUFFEUR !\nRedirect vers: digiy-driver-client');
+            redirectUrl = 'https://beauville.github.io/digiy-driver-client/';
+          } else if (firstModule === 'logement' || firstModule === 'loc' || firstModule === 'accommodation' || firstModule === 'hébergement') {
+            alert('✅ MATCH LOGEMENT !');
+            redirectUrl = 'https://beauville.github.io/digiy-loc/';
+          } else if (firstModule === 'restaurant' || firstModule === 'resto' || firstModule === 'restauration') {
+            alert('✅ MATCH RESTAURANT !');
+            redirectUrl = 'https://beauville.github.io/digiy-resto/';
+          } else {
+            alert('❌ AUCUN MATCH!\nfirstModule = "' + firstModule + '"\nRedirect vers mon-espace.html (default)');
+            redirectUrl = './mon-espace.html';
+          }
+        }
+        
+        console.log(`🚀 Redirection vers: ${redirectUrl} (modules: ${modules.join(', ')})`);
+        
+        // Stocker les infos pro en sessionStorage pour éviter re-fetch
+        sessionStorage.setItem('digiy_pro', JSON.stringify(pros));
+        
+        // Redirection
+        setTimeout(() => {
+          window.location.replace(redirectUrl);
+        }, 500);
+        
+      } catch (error) {
+        console.error('❌ Erreur router:', error);
+        showError(
+          error.message || 'Erreur lors de la vérification',
+          { error: error.toString() }
+        );
+      }
+    }
+    
+    // ========================================
+    // DÉMARRAGE AUTO
+    // ========================================
+    
+    // Démarrer dès que la page charge
+    routerDouane();
+    
+  </script>
 
 </body>
 </html>
