@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion Pro - DIGIYLYFE</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #00853F 0%, #FCD116 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 400px;
+      width: 100%;
+      padding: 40px 30px;
+    }
+    
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo h1 {
+      color: #00853F;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    
+    .logo .infinity {
+      font-size: 40px;
+      color: #FCD116;
+    }
+    
+    .logo p {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    input[type="tel"],
+    input[type="text"] {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #00853F;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn-primary {
+      background: #00853F;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #006830;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,133,63,0.3);
+    }
+    
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .message.show {
+      display: block;
+    }
+    
+    .step {
+      display: none;
+    }
+    
+    .step.active {
+      display: block;
+    }
+    
+    .helper-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #00853F;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    
+    <div class="logo">
+      <div class="infinity">∞</div>
+      <h1>DIGIYLYFE</h1>
+      <p>Espace Professionnel</p>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <div id="step1" class="step active">
+      <div class="form-group">
+        <label for="phoneInput">Numéro de téléphone</label>
+        <input 
+          type="tel" 
+          id="phoneInput" 
+          placeholder="+221 77 123 45 67"
+          autocomplete="tel"
+        />
+        <div class="helper-text">Format international : +221XXXXXXXXX</div>
+      </div>
+      
+      <button id="btnSendOtp" class="btn btn-primary">
+        Recevoir le code
+      </button>
+    </div>
+    
+    <div id="step2" class="step">
+      <div class="form-group">
+        <label for="otpInput">Code de vérification</label>
+        <input 
+          type="text" 
+          id="otpInput" 
+          placeholder="123456"
+          maxlength="6"
+          autocomplete="one-time-code"
+        />
+        <div class="helper-text">Code envoyé par SMS</div>
+      </div>
+      
+      <button id="btnVerifyOtp" class="btn btn-primary">
+        Se connecter
+      </button>
+      
+      <button id="btnBack" class="btn" style="background: #f0f0f0; color: #333; margin-top: 10px;">
+        Changer de numéro
+      </button>
+    </div>
+    
+  </div>
+
+  <script>
+    // ========================================
+    // CONFIGURATION SUPABASE - CLÉ MISE À JOUR
+    // ========================================
+    const SUPABASE_URL = 'https://wesqmwjjtsefyjnluosj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA';
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // ========================================
+    // ÉLÉMENTS DOM
+    // ========================================
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const phoneInput = document.getElementById('phoneInput');
+    const otpInput = document.getElementById('otpInput');
+    const btnSendOtp = document.getElementById('btnSendOtp');
+    const btnVerifyOtp = document.getElementById('btnVerifyOtp');
+    const btnBack = document.getElementById('btnBack');
+    const message = document.getElementById('message');
+    
+    let currentPhone = '';
+    
+    // ========================================
+    // HELPERS
+    // ========================================
+    
+    function showMessage(text, type = 'success') {
+      message.textContent = text;
+      message.className = `message ${type} show`;
+      setTimeout(() => message.classList.remove('show'), 5000);
+    }
+    
+    function formatPhone(phone) {
+      // Nettoyer le numéro
+      let cleaned = phone.replace(/\D/g, '');
+      
+      // Si commence par 7 ou 77, ajouter +221
+      if (cleaned.startsWith('7')) {
+        cleaned = '221' + cleaned;
+      }
+      
+      // Ajouter le +
+      if (!cleaned.startsWith('+')) {
+        cleaned = '+' + cleaned;
+      }
+      
+      return cleaned;
+    }
+    
+    function setLoading(btn, loading) {
+      if (loading) {
+        btn.disabled = true;
+        btn.innerHTML += '<span class="loading"></span>';
+      } else {
+        btn.disabled = false;
+        const loadingSpan = btn.querySelector('.loading');
+        if (loadingSpan) loadingSpan.remove();
+      }
+    }
+    
+    // ========================================
+    // ÉTAPE 1 : ENVOYER OTP
+    // ========================================
+    
+    btnSendOtp.addEventListener('click', async () => {
+      const phone = phoneInput.value.trim();
+      
+      if (!phone) {
+        showMessage('Veuillez entrer votre numéro de téléphone', 'error');
+        return;
+      }
+      
+      currentPhone = formatPhone(phone);
+      console.log('📱 Envoi OTP à:', currentPhone);
+      
+      setLoading(btnSendOtp, true);
+      
+      try {
+        const { data, error } = await supabase.auth.signInWithOtp({
+          phone: currentPhone,
+          options: {
+            channel: 'sms'
+          }
+        });
+        
+        if (error) {
+          console.error('❌ Erreur Supabase:', error);
+          
+          // Gestion d'erreur PROPRE (pas "[object Object]")
+          let errorMessage = 'Erreur lors de l\'envoi du code';
+          
+          if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          if (error.message?.includes('Unsupported phone provider')) {
+            errorMessage = '⚠️ Twilio Verify non configuré dans Supabase. Voir SUPABASE-CONFIG.md';
+          }
+          
+          if (error.message?.includes('Invalid API key')) {
+            errorMessage = '⚠️ Clé API Supabase invalide. Contactez le support.';
+          }
+          
+          showMessage(errorMessage, 'error');
+          setLoading(btnSendOtp, false);
+          return;
+        }
+        
+        console.log('✅ OTP envoyé:', data);
+        showMessage(`Code envoyé au ${currentPhone}`, 'success');
+        
+        // Passer à l'étape 2
+        step1.classList.remove('active');
+        step2.classList.add('active');
+        otpInput.focus();
+        
+      } catch (err) {
+        console.error('❌ Erreur catch:', err);
+        showMessage('Erreur réseau. Vérifiez votre connexion.', 'error');
+      } finally {
+        setLoading(btnSendOtp, false);
+      }
+    });
+    
+    // ========================================
+    // ÉTAPE 2 : VÉRIFIER OTP
+    // ========================================
+    
+    btnVerifyOtp.addEventListener('click', async () => {
+      const code = otpInput.value.trim();
+      
+      if (!code || code.length !== 6) {
+        showMessage('Code invalide (6 chiffres requis)', 'error');
+        return;
+      }
+      
+      console.log('🔐 Vérification code:', code);
+      setLoading(btnVerifyOtp, true);
+      
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({
+          phone: currentPhone,
+          token: code,
+          type: 'sms'
+        });
+        
+        if (error) {
+          console.error('❌ Code incorrect:', error);
+          showMessage('Code incorrect ou expiré', 'error');
+          setLoading(btnVerifyOtp, false);
+          return;
+        }
+        
+        console.log('✅ Connexion réussie:', data.user);
+        showMessage('✅ Connexion réussie ! Vérification session...', 'success');
+        
+        // ⚠️ ATTENDRE QUE LA SESSION SOIT CONFIRMÉE
+        // Vérifier que la session existe vraiment
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !sessionData.session) {
+          console.error('❌ Erreur session après login:', sessionError);
+          showMessage('Erreur session. Réessayez.', 'error');
+          setLoading(btnVerifyOtp, false);
+          return;
+        }
+        
+        console.log('✅ Session confirmée:', sessionData.session.user.id);
+        showMessage('✅ Session confirmée ! Redirection...', 'success');
+        
+        // REDIRECT VERS LA DOUANE
+        setTimeout(() => {
+          window.location.replace('./douane.html');
+        }, 500);
+        
+      } catch (err) {
+        console.error('❌ Erreur catch:', err);
+        showMessage('Erreur réseau. Vérifiez votre connexion.', 'error');
+        setLoading(btnVerifyOtp, false);
+      }
+    });
+    
+    // ========================================
+    // RETOUR À L'ÉTAPE 1
+    // ========================================
+    
+    btnBack.addEventListener('click', () => {
+      step2.classList.remove('active');
+      step1.classList.add('active');
+      otpInput.value = '';
+      phoneInput.value = '';
+      phoneInput.focus();
+    });
+    
+    // ========================================
+    // ENTER KEY SUPPORT
+    // ========================================
+    
+    phoneInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') btnSendOtp.click();
+    });
+    
+    otpInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') btnVerifyOtp.click();
+    });
+    
+    // ========================================
+    // AUTO-FOCUS
+    // ========================================
+    
+    phoneInput.focus();
+    
+  </script>
+
+</body>
+</html>
