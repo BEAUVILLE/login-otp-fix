@@ -228,6 +228,34 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ========================================
+    // LISTENER D'AUTHENTIFICATION
+    // ========================================
+    
+    let authRedirectPending = false;
+    
+    // Écouter les changements d'état d'authentification
+    supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔔 Auth event:', event);
+      console.log('🔔 Session:', session ? 'EXISTS' : 'NULL');
+      
+      // Si on a une session ET qu'on attend le redirect
+      if (session && authRedirectPending) {
+        console.log('✅ Session confirmée par onAuthStateChange !');
+        console.log('✅ Session user:', session.user.id);
+        
+        // Vérifier que localStorage a bien la session
+        const storageKey = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
+        const stored = localStorage.getItem(storageKey);
+        console.log('✅ LocalStorage check:', stored ? 'EXISTS' : 'EMPTY');
+        
+        // Redirect maintenant que tout est sauvegardé
+        console.log('🚀 Redirect vers douane.html...');
+        authRedirectPending = false;
+        window.location.replace('./douane.html');
+      }
+    });
+    
+    // ========================================
     // ÉLÉMENTS DOM
     // ========================================
     const step1 = document.getElementById('step1');
@@ -373,26 +401,21 @@
         }
         
         console.log('✅ Connexion réussie:', data.user);
-        showMessage('✅ Connexion réussie ! Vérification session...', 'success');
+        console.log('✅ User ID:', data.user.id);
         
-        // ⚠️ ATTENDRE QUE LA SESSION SOIT CONFIRMÉE
-        // Vérifier que la session existe vraiment
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        showMessage('✅ Connexion réussie ! Sauvegarde session...', 'success');
         
-        if (sessionError || !sessionData.session) {
-          console.error('❌ Erreur session après login:', sessionError);
-          showMessage('Erreur session. Réessayez.', 'error');
-          setLoading(btnVerifyOtp, false);
-          return;
-        }
+        // Activer le flag pour que onAuthStateChange fasse le redirect
+        authRedirectPending = true;
         
-        console.log('✅ Session confirmée:', sessionData.session.user.id);
-        showMessage('✅ Session confirmée ! Redirection...', 'success');
-        
-        // REDIRECT VERS LA DOUANE
+        // Attendre max 5 secondes pour onAuthStateChange
         setTimeout(() => {
-          window.location.replace('./douane.html');
-        }, 500);
+          if (authRedirectPending) {
+            console.warn('⚠️ Timeout onAuthStateChange, redirect forcé');
+            authRedirectPending = false;
+            window.location.replace('./douane.html');
+          }
+        }, 5000);
         
       } catch (err) {
         console.error('❌ Erreur catch:', err);
