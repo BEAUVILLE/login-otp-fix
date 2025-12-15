@@ -1,0 +1,57 @@
+
+---
+
+## 🔐 Flux de connexion (logique)
+
+1. L’utilisateur arrive sur `index.html`
+2. Il saisit son numéro de téléphone
+3. Il reçoit un **code OTP par SMS**
+4. Après validation :
+   - une session Supabase est créée
+   - redirection vers `douane.html`
+5. `douane.html` :
+   - vérifie la session
+   - récupère le profil dans la table `pros`
+   - redirige vers le bon module DIGIY
+
+---
+
+## 🛂 Logique de routing (douane)
+
+Le routage dépend du champ `type_pro` dans la table `pros` :
+
+| type_pro        | Redirection |
+|-----------------|-------------|
+| `driver`        | DIGIY DRIVER |
+| `loc`           | DIGIY LOC |
+| `restaurant`   | DIGIY RESTO |
+| `multi`         | Choix d’espace |
+| autre / inconnu | Mon Espace général |
+
+Les statuts gérés :
+- `actif` ✅
+- `en_attente` ⏳
+- `suspendu` ⛔
+
+---
+
+## 🧰 Stack technique
+
+- **Frontend** : HTML / CSS / JavaScript (vanilla)
+- **Auth** : Supabase Auth (OTP SMS)
+- **Backend** : Supabase (PostgreSQL + RLS)
+- **Hébergement** : GitHub Pages
+- **SMS** : Twilio Verify (via Supabase)
+
+---
+
+## 🚀 Déploiement (simple)
+
+1. Le fichier `index.html` est chargé automatiquement par GitHub Pages
+2. `douane.html` doit être à la **racine du repo**
+3. Activer GitHub Pages :
+   - Settings → Pages
+   - Branch : `main`
+   - Folder : `/ (root)`
+
+URL finale :
